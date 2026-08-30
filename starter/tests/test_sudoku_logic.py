@@ -57,6 +57,27 @@ def test_count_solutions_returns_one_for_single_empty_cell_board():
     assert sl.count_solutions(puzzle, limit=2) == 1
 
 
+def test_get_clues_for_difficulty_maps_expected_counts():
+    assert sl.get_clues_for_difficulty('easy') == 45
+    assert sl.get_clues_for_difficulty('medium') == 35
+    assert sl.get_clues_for_difficulty('hard') == 30
+
+
+def test_generate_puzzle_for_difficulty_uses_difficulty_clue_counts():
+    random.seed(0)
+
+    for difficulty, expected_clues in [('easy', 45), ('medium', 35), ('hard', 30)]:
+        puzzle, solution = sl.generate_puzzle_for_difficulty(difficulty)
+        non_empty = sum(1 for row in puzzle for cell in row if cell != sl.EMPTY)
+        assert non_empty == expected_clues
+        assert sl.count_solutions(puzzle, limit=2) == 1
+
+        for i in range(sl.SIZE):
+            for j in range(sl.SIZE):
+                if puzzle[i][j] != sl.EMPTY:
+                    assert puzzle[i][j] == solution[i][j]
+
+
 def test_generate_puzzle_clue_count_and_solution_alignment():
     clues = 35
     puzzle, solution = sl.generate_puzzle(clues)

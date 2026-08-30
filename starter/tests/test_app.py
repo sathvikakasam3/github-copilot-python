@@ -54,6 +54,31 @@ def test_new_with_query_clues_updates_current_store(client, monkeypatch):
     assert sudoku_app.CURRENT["solution"] == solution
 
 
+def test_new_with_difficulty_maps_to_expected_clues(client, monkeypatch):
+    seen = {}
+
+    puzzle = _board_with_value(0)
+    solution = _board_with_value(7)
+
+    def fake_generate(clues):
+        seen["clues"] = clues
+        return puzzle, solution
+
+    monkeypatch.setattr(sudoku_logic, "generate_puzzle", fake_generate)
+
+    response = client.get("/new?difficulty=hard")
+    assert response.status_code == 200
+    assert seen["clues"] == 30
+    assert response.get_json() == {"puzzle": puzzle}
+
+
+def test_new_rejects_unknown_difficulty(client):
+    response = client.get("/new?difficulty=impossible")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "unknown difficulty: impossible"}
+
+
 def test_check_returns_400_if_no_game_in_progress(client):
     board = _board_with_value(0)
     response = client.post("/check", json={"board": board})

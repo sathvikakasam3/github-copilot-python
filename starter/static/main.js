@@ -2,6 +2,11 @@
 const SIZE = 9;
 let puzzle = [];
 
+function getSelectedDifficulty() {
+  const selector = document.getElementById('difficulty');
+  return selector ? selector.value : 'medium';
+}
+
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
   boardDiv.innerHTML = '';
@@ -48,8 +53,15 @@ function renderPuzzle(puz) {
 }
 
 async function newGame() {
-  const res = await fetch('/new');
+  const difficulty = getSelectedDifficulty();
+  const res = await fetch(`/new?difficulty=${encodeURIComponent(difficulty)}`);
   const data = await res.json();
+  if (data.error) {
+    const msg = document.getElementById('message');
+    msg.style.color = '#d32f2f';
+    msg.innerText = data.error;
+    return;
+  }
   renderPuzzle(data.puzzle);
   document.getElementById('message').innerText = '';
 }

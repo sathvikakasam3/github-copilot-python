@@ -11,6 +11,24 @@ h1 {
     color: #333;
 }
 
+.difficulty-picker {
+    margin: 12px auto 0;
+}
+
+.difficulty-picker label {
+    margin-right: 8px;
+    font-size: 16px;
+    color: #333;
+}
+
+.difficulty-picker select {
+    padding: 8px 12px;
+    font-size: 16px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    background: #fff;
+}
+
 #sudoku-board {
     display: inline-block;
     margin: 30px auto;
