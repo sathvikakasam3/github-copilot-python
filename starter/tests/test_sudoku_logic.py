@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import random
 
 STARTER_DIR = Path(__file__).resolve().parents[1]
 if str(STARTER_DIR) not in sys.path:
@@ -38,6 +39,24 @@ def test_fill_board_produces_valid_complete_grid():
         assert col_vals == expected
 
 
+def test_count_solutions_returns_one_for_single_empty_cell_board():
+    solved_board = [
+        [5, 3, 4, 6, 7, 8, 9, 1, 2],
+        [6, 7, 2, 1, 9, 5, 3, 4, 8],
+        [1, 9, 8, 3, 4, 2, 5, 6, 7],
+        [8, 5, 9, 7, 6, 1, 4, 2, 3],
+        [4, 2, 6, 8, 5, 3, 7, 9, 1],
+        [7, 1, 3, 9, 2, 4, 8, 5, 6],
+        [9, 6, 1, 5, 3, 7, 2, 8, 4],
+        [2, 8, 7, 4, 1, 9, 6, 3, 5],
+        [3, 4, 5, 2, 8, 6, 1, 7, 9],
+    ]
+    puzzle = sl.deep_copy(solved_board)
+    puzzle[0][0] = sl.EMPTY
+
+    assert sl.count_solutions(puzzle, limit=2) == 1
+
+
 def test_generate_puzzle_clue_count_and_solution_alignment():
     clues = 35
     puzzle, solution = sl.generate_puzzle(clues)
@@ -54,3 +73,11 @@ def test_generate_puzzle_clue_count_and_solution_alignment():
         for j in range(sl.SIZE):
             if puzzle[i][j] != sl.EMPTY:
                 assert puzzle[i][j] == solution[i][j]
+
+
+def test_generate_puzzle_has_exactly_one_solution():
+    random.seed(0)
+
+    puzzle, _ = sl.generate_puzzle(35)
+
+    assert sl.count_solutions(puzzle, limit=2) == 1
