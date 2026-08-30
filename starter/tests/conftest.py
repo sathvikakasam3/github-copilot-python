@@ -15,9 +15,11 @@ def client():
     sudoku_app.app.config.update(TESTING=True)
     sudoku_app.CURRENT["puzzle"] = None
     sudoku_app.CURRENT["solution"] = None
+    sudoku_app.CURRENT["hints_used"] = 0
 
     with sudoku_app.app.test_client() as test_client:
         yield test_client
 
     sudoku_app.CURRENT["puzzle"] = None
     sudoku_app.CURRENT["solution"] = None
+    sudoku_app.CURRENT["hints_used"] = 0

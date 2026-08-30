@@ -15,6 +15,43 @@ def deep_copy(board):
 def create_empty_board():
     return [[EMPTY for _ in range(SIZE)] for _ in range(SIZE)]
 
+
+def board_matches_solution(board, solution):
+    for row in range(SIZE):
+        for col in range(SIZE):
+            if board[row][col] != solution[row][col]:
+                return False
+    return True
+
+
+def is_board_complete(board, solution):
+    for row in range(SIZE):
+        for col in range(SIZE):
+            if board[row][col] == EMPTY or board[row][col] != solution[row][col]:
+                return False
+    return True
+
+
+def get_incorrect_cells(board, solution):
+    incorrect = []
+    for row in range(SIZE):
+        for col in range(SIZE):
+            if board[row][col] != EMPTY and board[row][col] != solution[row][col]:
+                incorrect.append([row, col])
+    return incorrect
+
+
+def get_hint_cell(board, solution):
+    for row in range(SIZE):
+        for col in range(SIZE):
+            if board[row][col] == EMPTY:
+                return {
+                    'row': row,
+                    'col': col,
+                    'value': solution[row][col],
+                }
+    return None
+
 def is_safe(board, row, col, num):
     # Check row and column
     for x in range(SIZE):

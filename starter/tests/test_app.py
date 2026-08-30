@@ -34,7 +34,7 @@ def test_new_uses_default_clues_when_not_provided(client, monkeypatch):
     response = client.get("/new")
     assert response.status_code == 200
     assert seen["clues"] == 35
-    assert response.get_json() == {"puzzle": puzzle}
+    assert response.get_json() == {"puzzle": puzzle, "solution": solution, "hints_used": 0}
 
 
 def test_new_with_query_clues_updates_current_store(client, monkeypatch):
@@ -49,9 +49,10 @@ def test_new_with_query_clues_updates_current_store(client, monkeypatch):
 
     response = client.get("/new?clues=40")
     assert response.status_code == 200
-    assert response.get_json() == {"puzzle": puzzle}
+    assert response.get_json() == {"puzzle": puzzle, "solution": solution, "hints_used": 0}
     assert sudoku_app.CURRENT["puzzle"] == puzzle
     assert sudoku_app.CURRENT["solution"] == solution
+    assert sudoku_app.CURRENT["hints_used"] == 0
 
 
 def test_new_with_difficulty_maps_to_expected_clues(client, monkeypatch):
@@ -69,7 +70,7 @@ def test_new_with_difficulty_maps_to_expected_clues(client, monkeypatch):
     response = client.get("/new?difficulty=hard")
     assert response.status_code == 200
     assert seen["clues"] == 30
-    assert response.get_json() == {"puzzle": puzzle}
+    assert response.get_json() == {"puzzle": puzzle, "solution": solution, "hints_used": 0}
 
 
 def test_new_rejects_unknown_difficulty(client):
@@ -97,4 +98,40 @@ def test_check_returns_incorrect_coordinates(client):
 
     response = client.post("/check", json={"board": board})
     assert response.status_code == 200
-    assert response.get_json() == {"incorrect": [[0, 0], [8, 8]]}
+    assert response.get_json() == {"incorrect": [[0, 0], [8, 8]], "solved": False}
+
+
+def test_check_returns_solved_true_for_complete_board(client):
+    solution = _board_with_value(4)
+    sudoku_app.CURRENT["solution"] = solution
+
+    response = client.post("/check", json={"board": solution})
+
+    assert response.status_code == 200
+    assert response.get_json() == {"incorrect": [], "solved": True}
+
+
+def test_hint_returns_one_empty_cell_and_tracks_hint_count(client):
+    puzzle = _board_with_value(0)
+    solution = [[(row * sudoku_logic.SIZE + col) % 9 + 1 for col in range(sudoku_logic.SIZE)] for row in range(sudoku_logic.SIZE)]
+    sudoku_app.CURRENT["puzzle"] = puzzle
+    sudoku_app.CURRENT["solution"] = solution
+
+    board = _board_with_value(0)
+    board[0][0] = 5
+
+    response = client.post("/hint", json={"board": board})
+
+    assert response.status_code == 200
+    assert response.get_json() == {"row": 0, "col": 1, "value": solution[0][1], "hints_used": 1}
+    assert sudoku_app.CURRENT["hints_used"] == 1
+
+
+def test_hint_rejects_when_board_has_no_empty_cells(client):
+    solution = _board_with_value(3)
+    sudoku_app.CURRENT["solution"] = solution
+
+    response = client.post("/hint", json={"board": solution})
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "No empty cells available"}

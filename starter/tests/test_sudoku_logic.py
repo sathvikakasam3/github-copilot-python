@@ -16,6 +16,51 @@ def test_create_empty_board_shape_and_values():
     assert all(cell == sl.EMPTY for row in board for cell in row)
 
 
+def test_board_matches_solution_and_completion_helpers():
+    solved_board = [
+        [5, 3, 4, 6, 7, 8, 9, 1, 2],
+        [6, 7, 2, 1, 9, 5, 3, 4, 8],
+        [1, 9, 8, 3, 4, 2, 5, 6, 7],
+        [8, 5, 9, 7, 6, 1, 4, 2, 3],
+        [4, 2, 6, 8, 5, 3, 7, 9, 1],
+        [7, 1, 3, 9, 2, 4, 8, 5, 6],
+        [9, 6, 1, 5, 3, 7, 2, 8, 4],
+        [2, 8, 7, 4, 1, 9, 6, 3, 5],
+        [3, 4, 5, 2, 8, 6, 1, 7, 9],
+    ]
+    board = sl.deep_copy(solved_board)
+
+    assert sl.board_matches_solution(board, solved_board) is True
+    assert sl.is_board_complete(board, solved_board) is True
+
+    board[0][0] = sl.EMPTY
+    assert sl.board_matches_solution(board, solved_board) is False
+    assert sl.is_board_complete(board, solved_board) is False
+
+
+def test_get_incorrect_cells_and_hint_cell_helpers():
+    solution = [
+        [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        [4, 5, 6, 7, 8, 9, 1, 2, 3],
+        [7, 8, 9, 1, 2, 3, 4, 5, 6],
+        [2, 3, 1, 5, 6, 4, 8, 9, 7],
+        [5, 6, 4, 8, 9, 7, 2, 3, 1],
+        [8, 9, 7, 2, 3, 1, 5, 6, 4],
+        [3, 1, 2, 6, 4, 5, 9, 7, 8],
+        [6, 4, 5, 9, 7, 8, 3, 1, 2],
+        [9, 7, 8, 3, 1, 2, 6, 4, 5],
+    ]
+    board = sl.deep_copy(solution)
+    board[0][0] = 9
+    board[0][1] = sl.EMPTY
+
+    assert sl.get_incorrect_cells(board, solution) == [[0, 0]]
+    assert sl.get_hint_cell(board, solution) == {"row": 0, "col": 1, "value": 2}
+
+    full_board = sl.deep_copy(solution)
+    assert sl.get_hint_cell(full_board, solution) is None
+
+
 def test_is_safe_rejects_row_column_and_box_conflicts():
     board = sl.create_empty_board()
     board[0][0] = 5

@@ -18,8 +18,10 @@
   <div id="sudoku-board"></div>
   <div class="controls">
     <button id="new-game">New Game</button>
-    <button id="check-solution">Check Solution</button>
-    <span id="message"></span>
+    <button id="check-solution">Check Puzzle</button>
+    <button id="hint-button">Hint</button>
+    <span class="hint-meter">Hints used: <strong id="hint-count">0</strong></span>
+    <span id="message" role="status" aria-live="polite"></span>
   </div>
   <script src="/static/main.js"></script>
 </body>
