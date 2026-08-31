@@ -21,6 +21,59 @@ function cellKey(row, col) {
   return row * SIZE + col;
 }
 
+function getCellLabel(row, col, value) {
+  const displayValue = value === '' || value === null || value === undefined ? 'empty' : `value ${value}`;
+  return `Row ${row + 1}, column ${col + 1}, ${displayValue}. Enter a number from 1 to 9.`;
+}
+
+function updateCellAriaState(input, row, col) {
+  if (!input) {
+    return;
+  }
+
+  const value = input.value;
+  input.setAttribute('role', 'gridcell');
+  input.setAttribute('aria-label', getCellLabel(row, col, value));
+  input.setAttribute('aria-invalid', input.classList.contains('incorrect') ? 'true' : 'false');
+}
+
+function focusCell(row, col) {
+  const input = document.querySelector(`.sudoku-cell[data-row="${row}"][data-col="${col}"]`);
+  if (input) {
+    input.focus();
+  }
+}
+
+function handleCellNavigation(event) {
+  const input = event.target;
+  const row = Number(input.dataset.row);
+  const col = Number(input.dataset.col);
+
+  if (Number.isNaN(row) || Number.isNaN(col)) {
+    return;
+  }
+
+  const moveMap = {
+    ArrowUp: [row - 1, col],
+    ArrowDown: [row + 1, col],
+    ArrowLeft: [row, col - 1],
+    ArrowRight: [row, col + 1],
+  };
+
+  const nextPosition = moveMap[event.key];
+  if (!nextPosition) {
+    return;
+  }
+
+  const [nextRow, nextCol] = nextPosition;
+  if (nextRow < 0 || nextRow >= SIZE || nextCol < 0 || nextCol >= SIZE) {
+    return;
+  }
+
+  event.preventDefault();
+  focusCell(nextRow, nextCol);
+}
+
 function applyTheme(theme) {
   const normalizedTheme = theme === 'dark' ? 'dark' : 'light';
   document.documentElement.dataset.theme = normalizedTheme;
@@ -29,6 +82,7 @@ function applyTheme(theme) {
   if (themeToggle) {
     const isDark = normalizedTheme === 'dark';
     themeToggle.setAttribute('aria-pressed', String(isDark));
+    themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
     themeToggle.textContent = isDark ? 'Light mode' : 'Dark mode';
   }
 }
@@ -129,6 +183,7 @@ function getBoardFromInputs() {
 function clearIncorrectHighlights() {
   document.querySelectorAll('.sudoku-cell').forEach((input) => {
     input.classList.remove('incorrect');
+    input.setAttribute('aria-invalid', 'false');
   });
 }
 
@@ -255,11 +310,15 @@ function prepareCell(input, row, col, value, lockedClass) {
   input.dataset.locked = lockedClass ? 'true' : 'false';
   input.readOnly = Boolean(lockedClass);
   input.value = value === 0 ? '' : String(value);
+  input.setAttribute('role', 'gridcell');
+  input.setAttribute('aria-label', getCellLabel(row, col, input.value));
+  input.setAttribute('aria-invalid', 'false');
 
   if (lockedClass) {
     input.classList.add(lockedClass);
   }
 
+  input.addEventListener('keydown', handleCellNavigation);
   input.addEventListener('input', (event) => {
     if (event.target.readOnly) {
       return;
@@ -267,6 +326,8 @@ function prepareCell(input, row, col, value, lockedClass) {
 
     event.target.value = event.target.value.replace(/[^1-9]/g, '').slice(0, 1);
     event.target.classList.remove('incorrect');
+    event.target.setAttribute('aria-invalid', 'false');
+    updateCellAriaState(event.target, row, col);
     setMessage('', 'info');
     checkForCompletion();
   });
@@ -314,6 +375,7 @@ function renderPuzzle(puzzle) {
       input.dataset.locked = value === 0 ? 'false' : 'true';
       input.readOnly = value !== 0;
       input.value = value === 0 ? '' : String(value);
+      updateCellAriaState(input, row, col);
 
       if (value !== 0) {
         input.classList.add('prefilled');
@@ -389,6 +451,7 @@ function checkSolution() {
     const input = document.querySelectorAll('.sudoku-cell')[idx];
     if (input) {
       input.classList.add('incorrect');
+      input.setAttribute('aria-invalid', 'true');
     }
   });
 
@@ -436,7 +499,9 @@ async function requestHint() {
     input.readOnly = true;
     input.dataset.locked = 'true';
     input.classList.remove('incorrect');
+    input.setAttribute('aria-invalid', 'false');
     input.classList.add('hinted');
+    updateCellAriaState(input, data.row, data.col);
     gameState.lockedCells.add(idx);
     gameState.hintsUsed = data.hints_used;
     updateHintCounter();
