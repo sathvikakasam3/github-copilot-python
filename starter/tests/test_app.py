@@ -19,6 +19,13 @@ def test_index_returns_html(client):
     assert b"Sudoku Game" in response.data
 
 
+def test_index_includes_visible_timer(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b'id="timer-value"' in response.data
+    assert b'00:00' in response.data
+
+
 def test_new_uses_default_clues_when_not_provided(client, monkeypatch):
     seen = {}
 

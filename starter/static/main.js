@@ -7,7 +7,9 @@ const gameState = {
   lockedCells: new Set(),
   hintsUsed: 0,
   completed: false,
-  timerStopRequested: false,
+  timerIntervalId: null,
+  elapsedSeconds: 0,
+  activeGameRequestId: 0,
 };
 
 window.sudokuGameState = gameState;
@@ -32,6 +34,48 @@ function updateHintCounter() {
   if (hintCount) {
     hintCount.textContent = String(gameState.hintsUsed);
   }
+}
+
+function formatTime(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function updateTimerDisplay() {
+  const timer = document.getElementById('timer-value');
+  if (timer) {
+    timer.textContent = formatTime(gameState.elapsedSeconds);
+  }
+}
+
+function stopTimer() {
+  if (gameState.timerIntervalId !== null) {
+    window.clearInterval(gameState.timerIntervalId);
+    gameState.timerIntervalId = null;
+  }
+}
+
+function resetTimer() {
+  stopTimer();
+  gameState.elapsedSeconds = 0;
+  updateTimerDisplay();
+}
+
+function startTimer() {
+  stopTimer();
+  gameState.elapsedSeconds = 0;
+  updateTimerDisplay();
+
+  gameState.timerIntervalId = window.setInterval(() => {
+    if (gameState.completed) {
+      stopTimer();
+      return;
+    }
+
+    gameState.elapsedSeconds += 1;
+    updateTimerDisplay();
+  }, 1000);
 }
 
 function getBoardFromInputs() {
@@ -68,7 +112,7 @@ function markCompletion() {
   }
 
   gameState.completed = true;
-  gameState.timerStopRequested = true;
+  stopTimer();
   lockBoard();
   setMessage(`Congratulations! Puzzle complete. Hints used: ${gameState.hintsUsed}.`, 'success');
   window.dispatchEvent(new CustomEvent('sudoku:completed', {
@@ -144,7 +188,6 @@ function renderPuzzle(puzzle) {
   gameState.puzzle = puzzle;
   gameState.lockedCells = new Set();
   gameState.completed = false;
-  gameState.timerStopRequested = false;
 
   createBoardElement();
 
@@ -172,13 +215,21 @@ function renderPuzzle(puzzle) {
   clearIncorrectHighlights();
   updateHintCounter();
   setMessage('', 'info');
+  updateTimerDisplay();
 }
 
 async function newGame() {
   try {
+    const requestId = gameState.activeGameRequestId + 1;
+    gameState.activeGameRequestId = requestId;
+
     const difficulty = getSelectedDifficulty();
     const res = await fetch(`/new?difficulty=${encodeURIComponent(difficulty)}`);
     const data = await res.json();
+
+    if (requestId !== gameState.activeGameRequestId) {
+      return;
+    }
 
     if (!res.ok || data.error) {
       setMessage(data.error || 'Unable to start a new game.', 'error');
@@ -189,6 +240,7 @@ async function newGame() {
     gameState.hintsUsed = data.hints_used ?? 0;
     renderPuzzle(data.puzzle);
     updateHintCounter();
+    startTimer();
   } catch (error) {
     setMessage('Unable to start a new game.', 'error');
   }
@@ -286,12 +338,13 @@ function resetGameState() {
   gameState.lockedCells = new Set();
   gameState.hintsUsed = 0;
   gameState.completed = false;
-  gameState.timerStopRequested = false;
+  resetTimer();
   updateHintCounter();
 }
 
 window.addEventListener('load', () => {
   resetGameState();
+  document.getElementById('difficulty').addEventListener('change', newGame);
   document.getElementById('new-game').addEventListener('click', newGame);
   document.getElementById('check-solution').addEventListener('click', checkSolution);
   document.getElementById('hint-button').addEventListener('click', requestHint);
