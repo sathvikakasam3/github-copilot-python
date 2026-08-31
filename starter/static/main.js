@@ -7,6 +7,8 @@ const gameState = {
   lockedCells: new Set(),
   hintsUsed: 0,
   completed: false,
+  scoreSaved: false,
+  difficulty: 'medium',
   timerIntervalId: null,
   elapsedSeconds: 0,
   activeGameRequestId: 0,
@@ -115,12 +117,85 @@ function markCompletion() {
   stopTimer();
   lockBoard();
   setMessage(`Congratulations! Puzzle complete. Hints used: ${gameState.hintsUsed}.`, 'success');
+  showScoreForm();
   window.dispatchEvent(new CustomEvent('sudoku:completed', {
     detail: {
       hintsUsed: gameState.hintsUsed,
       completedAt: new Date().toISOString(),
     },
   }));
+}
+
+function showScoreForm() {
+  const scoreForm = document.getElementById('score-form');
+  const playerName = document.getElementById('player-name');
+  if (scoreForm) {
+    scoreForm.hidden = false;
+    playerName.focus();
+  }
+}
+
+function hideScoreForm() {
+  const scoreForm = document.getElementById('score-form');
+  const playerName = document.getElementById('player-name');
+  if (scoreForm) {
+    scoreForm.hidden = true;
+    scoreForm.reset();
+  }
+  if (playerName) {
+    playerName.value = '';
+  }
+}
+
+function renderLeaderboard(scores = window.sudokuLeaderboard.getScores()) {
+  const table = document.getElementById('leaderboard-table');
+  const emptyMessage = document.getElementById('leaderboard-empty');
+  const body = document.getElementById('leaderboard-body');
+  if (!table || !emptyMessage || !body) {
+    return;
+  }
+
+  body.innerHTML = '';
+  scores.forEach((score, index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${index + 1}</td><td>${escapeHtml(score.playerName)}</td>`
+      + `<td>${formatTime(score.completionTime)}</td>`
+      + `<td>${score.difficulty[0].toUpperCase()}${score.difficulty.slice(1)}</td>`
+      + `<td>${score.hintsUsed}</td>`;
+    body.appendChild(row);
+  });
+  table.hidden = scores.length === 0;
+  emptyMessage.hidden = scores.length !== 0;
+}
+
+function escapeHtml(text) {
+  const element = document.createElement('div');
+  element.textContent = text;
+  return element.innerHTML;
+}
+
+function saveScore(event) {
+  event.preventDefault();
+  if (!gameState.completed || gameState.scoreSaved) {
+    return;
+  }
+
+  const playerName = document.getElementById('player-name').value.trim();
+  if (!playerName) {
+    setMessage('Enter your name to save your score.', 'error');
+    return;
+  }
+
+  const scores = window.sudokuLeaderboard.addScore({
+    playerName,
+    completionTime: gameState.elapsedSeconds,
+    difficulty: gameState.difficulty,
+    hintsUsed: gameState.hintsUsed,
+  });
+  gameState.scoreSaved = true;
+  hideScoreForm();
+  renderLeaderboard(scores);
+  setMessage('Score saved to the leaderboard.', 'success');
 }
 
 function checkForCompletion() {
@@ -188,6 +263,7 @@ function renderPuzzle(puzzle) {
   gameState.puzzle = puzzle;
   gameState.lockedCells = new Set();
   gameState.completed = false;
+  gameState.scoreSaved = false;
 
   createBoardElement();
 
@@ -219,6 +295,10 @@ function renderPuzzle(puzzle) {
 }
 
 async function newGame() {
+  hideScoreForm();
+  gameState.completed = false;
+  gameState.scoreSaved = false;
+
   try {
     const requestId = gameState.activeGameRequestId + 1;
     gameState.activeGameRequestId = requestId;
@@ -237,6 +317,7 @@ async function newGame() {
     }
 
     gameState.solution = data.solution;
+    gameState.difficulty = difficulty;
     gameState.hintsUsed = data.hints_used ?? 0;
     renderPuzzle(data.puzzle);
     updateHintCounter();
@@ -338,15 +419,18 @@ function resetGameState() {
   gameState.lockedCells = new Set();
   gameState.hintsUsed = 0;
   gameState.completed = false;
+  gameState.scoreSaved = false;
   resetTimer();
   updateHintCounter();
 }
 
 window.addEventListener('load', () => {
   resetGameState();
+  renderLeaderboard();
   document.getElementById('difficulty').addEventListener('change', newGame);
   document.getElementById('new-game').addEventListener('click', newGame);
   document.getElementById('check-solution').addEventListener('click', checkSolution);
   document.getElementById('hint-button').addEventListener('click', requestHint);
+  document.getElementById('score-form').addEventListener('submit', saveScore);
   newGame();
 });

@@ -26,6 +26,30 @@
     <button id="hint-button">Hint</button>
     <span id="message" role="status" aria-live="polite"></span>
   </div>
+  <form id="score-form" class="score-form" hidden>
+    <label for="player-name">Enter your name for the leaderboard</label>
+    <div class="score-form-fields">
+      <input id="player-name" name="player-name" type="text" maxlength="40" required autocomplete="name">
+      <button type="submit">Save Score</button>
+    </div>
+  </form>
+  <section class="leaderboard" aria-labelledby="leaderboard-title">
+    <h2 id="leaderboard-title">Top 10 Fastest Times</h2>
+    <p id="leaderboard-empty">Complete a puzzle to claim a place.</p>
+    <table id="leaderboard-table" hidden>
+      <thead>
+        <tr>
+          <th scope="col">Rank</th>
+          <th scope="col">Player</th>
+          <th scope="col">Time</th>
+          <th scope="col">Difficulty</th>
+          <th scope="col">Hints</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+  </section>
+  <script src="/static/leaderboard.js"></script>
   <script src="/static/main.js"></script>
 </body>
 </html>

@@ -26,6 +26,15 @@ def test_index_includes_visible_timer(client):
     assert b'00:00' in response.data
 
 
+def test_index_includes_leaderboard_and_score_form(client):
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert b'id="score-form"' in response.data
+    assert b'id="leaderboard-table"' in response.data
+    assert b'/static/leaderboard.js' in response.data
+
+
 def test_new_uses_default_clues_when_not_provided(client, monkeypatch):
     seen = {}
 

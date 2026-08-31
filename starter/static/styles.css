@@ -156,3 +156,84 @@ button:hover {
 #message[data-tone="success"] {
     color: #0f7a3a;
 }
+
+.score-form,
+.leaderboard {
+    width: min(92vw, 620px);
+    margin: 24px auto;
+}
+
+.score-form {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(37, 99, 235, 0.16);
+    border-radius: 12px;
+}
+
+.score-form label,
+.leaderboard h2 {
+    color: #102a43;
+}
+
+.score-form-fields {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.score-form input {
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid #9fb3c8;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.leaderboard {
+    text-align: left;
+}
+
+.leaderboard h2 {
+    text-align: center;
+}
+
+.leaderboard table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow: 0 14px 28px rgba(16, 42, 67, 0.08);
+}
+
+.leaderboard th,
+.leaderboard td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #d9e2ec;
+    text-align: left;
+}
+
+.leaderboard th {
+    color: #243b53;
+    font-size: 14px;
+}
+
+#leaderboard-empty {
+    text-align: center;
+    color: #627d98;
+}
+
+@media (max-width: 520px) {
+    .score-form-fields {
+        flex-direction: column;
+    }
+
+    .score-form-fields button {
+        width: 100%;
+    }
+
+    .leaderboard th,
+    .leaderboard td {
+        padding: 8px 4px;
+        font-size: 13px;
+    }
+}
