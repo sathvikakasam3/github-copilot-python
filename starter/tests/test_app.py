@@ -26,6 +26,14 @@ def test_index_includes_visible_timer(client):
     assert b'00:00' in response.data
 
 
+def test_index_includes_theme_toggle(client):
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert b'id="theme-toggle"' in response.data
+    assert b'Dark mode' in response.data
+
+
 def test_index_includes_leaderboard_and_score_form(client):
     response = client.get("/")
 

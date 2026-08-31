@@ -1,5 +1,6 @@
 // Client-side rendering and interaction for the Flask-backed Sudoku
 const SIZE = 9;
+const THEME_STORAGE_KEY = 'sudokuTheme';
 
 const gameState = {
   puzzle: [],
@@ -18,6 +19,36 @@ window.sudokuGameState = gameState;
 
 function cellKey(row, col) {
   return row * SIZE + col;
+}
+
+function applyTheme(theme) {
+  const normalizedTheme = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = normalizedTheme;
+
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    const isDark = normalizedTheme === 'dark';
+    themeToggle.setAttribute('aria-pressed', String(isDark));
+    themeToggle.textContent = isDark ? 'Light mode' : 'Dark mode';
+  }
+}
+
+function getSavedTheme() {
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY) || 'light';
+  } catch (error) {
+    return 'light';
+  }
+}
+
+function toggleTheme() {
+  const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(nextTheme);
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+  } catch (error) {
+    // Theme changes still apply when storage is unavailable.
+  }
 }
 
 function getSelectedDifficulty() {
@@ -252,6 +283,9 @@ function createBoardElement() {
     for (let col = 0; col < SIZE; col++) {
       const input = document.createElement('input');
       prepareCell(input, row, col, 0, null);
+      input.classList.add((Math.floor(row / 3) + Math.floor(col / 3)) % 2 === 0
+        ? 'box-even'
+        : 'box-odd');
       rowDiv.appendChild(input);
     }
 
@@ -425,8 +459,10 @@ function resetGameState() {
 }
 
 window.addEventListener('load', () => {
+  applyTheme(getSavedTheme());
   resetGameState();
   renderLeaderboard();
+  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
   document.getElementById('difficulty').addEventListener('change', newGame);
   document.getElementById('new-game').addEventListener('click', newGame);
   document.getElementById('check-solution').addEventListener('click', checkSolution);
